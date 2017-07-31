@@ -51,7 +51,6 @@ class Player(GameSprite):
         # Parse keyboard action
         if self.controller_id == -1:
             # Evaluate key being pressed or released
-            pressed = True
             if event.type == KEYDOWN:
                 pressed = True
             elif event.type == KEYUP:
@@ -67,21 +66,6 @@ class Player(GameSprite):
                 self.w_pressed = pressed
             elif event.key == K_s:
                 self.s_pressed = pressed
-            # Evaluate the movement of the snek
-            x, y = 0, 0
-            if self.a_pressed:
-                x = -1
-            elif self.d_pressed:
-                x = 1
-            elif self.w_pressed:
-                y = -1
-            elif self.s_pressed:
-                y = 1
-            if x == 0 and y == 0:
-                self.x_add, self.y_add = self.x_revert, self.y_revert
-            else:
-                self.x_revert, self.y_revert = self.x_add, self.y_add
-                self.x_add, self.y_add = x, y
             return
         # Disregard any input from other controllers
         if self.controller_id != event.joy:
@@ -96,6 +80,19 @@ class Player(GameSprite):
                 self.y_add = event.value
 
     def update(self):
+        # Evaluate the movement of the snek if you're using a keyboard
+        if self.controller_id == -1:
+            x, y = 0, 0
+            if self.a_pressed:
+                x = -1
+            if self.d_pressed:
+                x = 1
+            if self.w_pressed:
+                y = -1
+            if self.s_pressed:
+                y = 1
+            if x != 0 or y != 0:
+                self.x_add, self.y_add = x, y
         # Find distance of line on left stick (0, 0) -> (x_add, y_add)
         line_distance = self.pythagoras(self.x_add, self.y_add)
         # Stay the course if stick isn't pushed more than halfway
