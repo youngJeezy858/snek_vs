@@ -40,22 +40,36 @@ class ActiveGame(GameScreen):
         # Everyone is a winner!
         self.winner = []
         self.determine_winner()
+        self.active_game = False
+        self.active_game_timer = 300
+        self.timer_font = pygame.font.SysFont("monospace", 72)
 
     def next_screen(self):
         return startMenu.StartMenu(self.screen, self.players, self.winner)
 
     def check_event(self, event):
-        # Start menu listeners
-        if event.type == KEYDOWN and event.key == K_ESCAPE or \
-                event.type == JOYBUTTONDOWN and event.button == 7:
-            self.needs_switch = True
-        # Active game listeners
-        # if self.is_controller_active(event):
-        for player in self.players:
-            player.check_event(event)
+        if self.active_game and self.active_game_timer == 0:
+            # Start menu listeners
+            if event.type == KEYDOWN and event.key == K_ESCAPE or \
+                    event.type == JOYBUTTONDOWN and event.button == 7:
+                self.needs_switch = True
+            # Active game listeners
+            # if self.is_controller_active(event):
+            for player in self.players:
+                player.check_event(event)
 
     def update(self):
         self.screen.fill((0, 0, 0))
+
+        # Draw and updoot the start timer
+        if not self.active_game and self.active_game_timer != 0:
+            timer = self.timer_font.render(str(self.active_game_timer / 60), True, (255, 255, 255))
+            self.screen.blit(timer, (self.screen.get_width() / 2, self.screen.get_height() / 2))
+            self.active_game_timer -= 1
+            if self.active_game_timer == 0:
+                self.active_game = True
+
+        # Draw and updoot players
         for player in self.players:
             # Draw yo stats foo'
             stats_x = (self.screen.get_width() / (len(self.players) + 1)) * (player.controller_id + 1)
@@ -63,7 +77,9 @@ class ActiveGame(GameScreen):
             self.screen.blit(player.stats, (stats_x, stats_y))
 
             # Skip dis if you dead
-            if player.state == Player.DEAD:
+            # Skip dis if you invulnerable dawg
+            # Skip dis if game isn't active
+            if player.state == Player.DEAD or player.invulnerable:
                 continue
 
             # Get some noms
@@ -71,10 +87,6 @@ class ActiveGame(GameScreen):
                 tail = player.add_tail()
                 self.playerSprites[player.controller_id].add(tail)
                 self.pellet.reset_position(self.screen.get_width(), self.screen.get_height())
-
-            # Skip dis if you invulnerable dawg
-            if player.invulnerable:
-                continue
 
             # Check if you dead sucka
             # Check if you hit a boundary
@@ -115,9 +127,11 @@ class ActiveGame(GameScreen):
 
         # Finish updating + drawing the sprites
         for player in self.playerSprites:
-            player.update()
+            if self.active_game and self.active_game_timer == 0:
+                player.update()
             player.draw(self.screen)
-        self.pelletSprites.update()
+        if self.active_game and self.active_game_timer == 0:
+            self.pelletSprites.update()
         self.pelletSprites.draw(self.screen)
 
     def resize_screen(self, screen):
@@ -129,6 +143,8 @@ class ActiveGame(GameScreen):
 
     def determine_winner(self):
         alive_count = 0
+        if len(self.players) == 0:
+            self.needs_switch = True
         for player in self.players:
             if player.state == Player.DEAD:
                 if player in self.winner:

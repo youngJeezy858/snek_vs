@@ -39,7 +39,7 @@ class Player(GameSprite):
         self.state = self.ALIVE
         # Default invulnerability at start is 5s
         self.invulnerable = True
-        self.invulnerable_time = 300
+        self.invulnerable_time = 120
         self.tail = []
         self.pause_timer = int(self.dimensions[0] / self.movement_speed)
         self.movement_governor = [position]
