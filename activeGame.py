@@ -42,12 +42,14 @@ class ActiveGame(GameScreen):
         self.determine_winner()
         self.active_game = False
         self.active_game_timer = 300
-        self.timer_font = pygame.font.SysFont("monospace", 72)
+        self.announcement_font = pygame.font.SysFont("monospace", 36)
+        self.prompt_for_exit = False
 
     def next_screen(self):
         return startMenu.StartMenu(self.screen, self.players, self.winner)
 
     def check_event(self, event):
+        # If the game is active, listen for play inputs
         if self.active_game and self.active_game_timer == 0:
             # Start menu listeners
             if event.type == KEYDOWN and event.key == K_ESCAPE or \
@@ -58,18 +60,30 @@ class ActiveGame(GameScreen):
             for player in self.players:
                 player.check_event(event)
 
+        # Listen for the prompt to exit a finished game
+        if self.prompt_for_exit:
+            if event.type == KEYDOWN and event.key == K_ESCAPE or \
+                    event.type == JOYBUTTONDOWN and event.button == 7:
+                self.needs_switch = True
+
     def update(self):
         self.screen.fill((0, 0, 0))
 
         # Draw and updoot the start timer
         if not self.active_game and self.active_game_timer != 0:
-            timer = self.timer_font.render(str(self.active_game_timer / 60), True, (255, 255, 255))
+            timer = self.announcement_font.render(str(self.active_game_timer / 60), True, (255, 255, 255))
             self.screen.blit(timer, (self.screen.get_width() / 2, self.screen.get_height() / 2))
             self.active_game_timer -= 1
             if self.active_game_timer == 0:
                 self.active_game = True
 
-        # Draw and updoot players
+        # Draw and upoot the end game prompt
+        if self.prompt_for_exit:
+            exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
+            exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+            self.screen.blit(exit_prompt, exit_prompt_rect)
+
+        # Updoot any actions occurring with the players
         for player in self.players:
             # Draw yo stats foo'
             stats_x = (self.screen.get_width() / (len(self.players) + 1)) * (player.controller_id + 1)
@@ -143,8 +157,9 @@ class ActiveGame(GameScreen):
 
     def determine_winner(self):
         alive_count = 0
-        if len(self.players) == 0:
-            self.needs_switch = True
+
+        #if len(self.players) == 0:
+        #    self.listen_for_exit = True
         for player in self.players:
             if player.state == Player.DEAD:
                 if player in self.winner:
@@ -160,8 +175,8 @@ class ActiveGame(GameScreen):
             elif len(player.tail) > len(self.winner[0].tail):
                 self.winner = [player]
             alive_count += 1
-        if alive_count == self.game_over_num:
-            self.needs_switch = True
+        if alive_count <= self.game_over_num:
+            self.prompt_for_exit = True
 
     def kill_player(self, player):
         player.state = Player.DEAD
