@@ -1,12 +1,12 @@
 import os
 from constants.window_constants import *
+from constants.debugging_flags import *
 from startMenu import *
 from static_classes.exitListener import *
 import unittest
 
 
 pygame.init()
-RUN_TEST_SUITE = True
 if RUN_TEST_SUITE:
     test_suite = unittest.TestLoader().discover('.', '*_test.py')
     unittest.TextTestRunner(verbosity=2).run(test_suite)
@@ -15,7 +15,7 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 screen = pygame.display.set_mode((WINDOW_SIZE[0], WINDOW_SIZE[1]), HWSURFACE | DOUBLEBUF)
 pygame.display.set_caption('Snek VS')
 clock = pygame.time.Clock()
-game_screen = StartMenu(screen)
+game_screen = StartMenu(screen, clock)
 
 while True:
 

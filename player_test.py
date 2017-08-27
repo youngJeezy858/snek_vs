@@ -4,7 +4,7 @@ from player import *
 
 class TestPlayer(unittest.TestCase):
 
-    p = Player('blue', (25, 25), (100, 100), 0, 3)
+    p = Player('blue', 1, (25, 25), (100, 100), 0, 3)
 
     def test_find_movement_direction(self):
         counter_clockwise = [

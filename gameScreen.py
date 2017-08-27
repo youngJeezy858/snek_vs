@@ -1,6 +1,7 @@
 from abc import *
 import pygame
 from controller import *
+from constants.debugging_flags import *
 
 
 class GameScreen(object):
@@ -23,8 +24,9 @@ class GameScreen(object):
         MOUSEBUTTONDOWN
     )
 
-    def __init__(self, screen):
+    def __init__(self, screen, clock):
         self.screen = screen
+        self.clock = clock
         self.MIN_WIDTH = 1024
         self.MIN_HEIGHT = 576
         self.needs_switch = False
@@ -32,6 +34,7 @@ class GameScreen(object):
         self.controllers = []
         self.active_controller = False
         self.check_for_controllers()
+        self.fps_font = pygame.font.SysFont("monospace", 12)
 
     def calculate_dimensions(self, (width, height)):
         expanded_width = float(width) * float(self.width) / float(self.MIN_WIDTH)
@@ -57,7 +60,10 @@ class GameScreen(object):
 
     @abstractmethod
     def update(self):
-        return
+        self.screen.fill((0, 0, 0))
+        if FPS_COUNTER:
+            fps = self.fps_font.render(str(self.clock.get_fps()), True, (255, 255, 255))
+            self.screen.blit(fps, (10, 10))
 
     @abstractmethod
     def resize_screen(self, screen):

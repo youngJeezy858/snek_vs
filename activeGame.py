@@ -12,29 +12,27 @@ class ActiveGame(GameScreen):
     # Player color list
     player_colors = ['blue', 'red', 'red', 'red']
 
-    def __init__(self, screen, players=1):
-        super(ActiveGame, self).__init__(screen)
+    def __init__(self, screen, clock, players):
+        super(ActiveGame, self).__init__(screen, clock)
         self.playerSprites = []
         self.pelletSprites = pygame.sprite.Group()
-        self.players = []
+        self.tail_leftovers = pygame.sprite.Group()
         # Instantiate the pellet
         self.pellet = Pellet('images/pellet.png', (25, 25),
                              (randint(0, screen.get_width()), randint(0, screen.get_height())))
         self.pelletSprites.add(self.pellet)
         # Playing by myself, I want the game to be over when there are 0 alive peeps.
         # Otherwise the game is over when there's only one player left.
-        if players == 1:
+        if len(players) == 1:
             self.game_over_num = 0
         else:
             self.game_over_num = 1
         # Instantiate the players
-        for i in range(players):
-            # temp_player = Player(self.player_colors[i], (25, 25), (100, 100 * (i+1)), i, 3)
-            temp_player = Player(self.player_colors[i], (25, 25), (100, 100 * (i+1)), -1, 3)
+        self.players = players
+        for player in players:
             temp_player_group = pygame.sprite.Group()
-            temp_player_group.add(temp_player)
-            self.players.append(temp_player)
-            for t in temp_player.tail:
+            temp_player_group.add(player)
+            for t in player.tail:
                 temp_player_group.add(t)
             self.playerSprites.append(temp_player_group)
         # Everyone is a winner!
@@ -42,33 +40,23 @@ class ActiveGame(GameScreen):
         self.determine_winner()
         self.active_game = False
         self.active_game_timer = 300
-        self.announcement_font = pygame.font.SysFont("monospace", 36)
+        self.tail_pop_timer = 300
+        self.announcement_font = pygame.font.SysFont("monospace", 24)
+        self.winner_font = pygame.font.SysFont("monospace", 36)
         self.prompt_for_exit = False
 
     def next_screen(self):
-        return startMenu.StartMenu(self.screen, self.players, self.winner)
+        return startMenu.StartMenu(self.screen, self.clock)
 
     def check_event(self, event):
-        # If the game is active, listen for play inputs
-        if self.active_game and self.active_game_timer == 0:
-            # Start menu listeners
-            if event.type == KEYDOWN and event.key == K_ESCAPE or \
-                    event.type == JOYBUTTONDOWN and event.button == 7:
-                self.needs_switch = True
-            # Active game listeners
-            # if self.is_controller_active(event):
-            for player in self.players:
-                player.check_event(event)
-
-        # Listen for the prompt to exit a finished game
-        if self.prompt_for_exit:
-            if event.type == KEYDOWN and event.key == K_ESCAPE or \
-                    event.type == JOYBUTTONDOWN and event.button == 7:
-                self.needs_switch = True
+        if event.type == KEYDOWN and event.key == K_ESCAPE or \
+                event.type == JOYBUTTONDOWN and event.button == 7:
+            self.needs_switch = True
+        for player in self.players:
+            player.check_event(event)
 
     def update(self):
-        self.screen.fill((0, 0, 0))
-
+        super(ActiveGame, self).update()
         # Draw and updoot the start timer
         if not self.active_game and self.active_game_timer != 0:
             timer = self.announcement_font.render(str(self.active_game_timer / 60), True, (255, 255, 255))
@@ -76,12 +64,33 @@ class ActiveGame(GameScreen):
             self.active_game_timer -= 1
             if self.active_game_timer == 0:
                 self.active_game = True
+        # Updoot the tail pop
+        else:
+            self.tail_pop_timer -= 1
+            if self.tail_pop_timer == 0:
+                self.tail_pop_timer = 300
+                for player in self.players:
+                    temp_tail = player.pop_tail()
+                    if temp_tail is not None:
+                        temp_tail.controller_id = -9999
+                        self.tail_leftovers.add(temp_tail)
+                    else:
+                        self.kill_player(player)
+                        continue
 
         # Draw and upoot the end game prompt
         if self.prompt_for_exit:
             exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
             exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
             self.screen.blit(exit_prompt, exit_prompt_rect)
+            if len(self.winner) == 0:
+                winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
+            else:
+                winner_display = self.winner_font.render\
+                    (self.winner[0].color + " WINS!", True, self.winner[0].font_color)
+            winner_display_rect = winner_display.get_rect\
+                (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
+            self.screen.blit(winner_display, winner_display_rect)
 
         # Updoot any actions occurring with the players
         for player in self.players:
@@ -92,7 +101,6 @@ class ActiveGame(GameScreen):
 
             # Skip dis if you dead
             # Skip dis if you invulnerable dawg
-            # Skip dis if game isn't active
             if player.state == Player.DEAD or player.invulnerable:
                 continue
 
@@ -136,6 +144,11 @@ class ActiveGame(GameScreen):
                                   (player.controller_id, other_player.controller_id)
                             self.kill_player(player)
                             continue
+            for tail in self.tail_leftovers.sprites():
+                if pygame.sprite.collide_circle(player, tail):
+                    print "Player %s ate a leftover carcass!" % player.controller_id
+                    self.kill_player(player)
+                    continue
 
         self.determine_winner()
 
@@ -147,6 +160,7 @@ class ActiveGame(GameScreen):
         if self.active_game and self.active_game_timer == 0:
             self.pelletSprites.update()
         self.pelletSprites.draw(self.screen)
+        self.tail_leftovers.draw(self.screen)
 
     def resize_screen(self, screen):
         super(ActiveGame, self).resize_screen(screen)
@@ -157,9 +171,6 @@ class ActiveGame(GameScreen):
 
     def determine_winner(self):
         alive_count = 0
-
-        #if len(self.players) == 0:
-        #    self.listen_for_exit = True
         for player in self.players:
             if player.state == Player.DEAD:
                 if player in self.winner:

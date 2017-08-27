@@ -10,18 +10,15 @@ class Player(GameSprite):
     ALIVE = 0
     DEAD = 1
 
-    def __init__(self, color, dimensions, position, controller_id, movement_speed, x_add=0, y_add=-1):
+    def __init__(self, color, shade_id, dimensions, position, controller_id, movement_speed, x_add=0, y_add=-1):
         self.state = self.ALIVE
         self.color = color
-        image = "images/player_" + color + ".png"
+        image = "images/player_" + color + "_" + str(shade_id) + ".png"
         self.font_color = (255, 255, 255)
         if color == "blue":
             self.font_color = (0, 0, 255)
         elif color == "red":
             self.font_color = (255, 0, 0)
-        self.stats_font = pygame.font.SysFont("monospace", 16)
-        self.winner_font = pygame.font.SysFont("monospace", 32)
-        self.winner_display = self.winner_font.render(self.color, True, self.font_color)
         super(Player, self).__init__(image, dimensions, position)
         self.real_x = float(position[0])
         self.real_y = float(position[1])
@@ -44,6 +41,9 @@ class Player(GameSprite):
         self.pause_timer = int(self.dimensions[0] / self.movement_speed)
         self.movement_governor = [position]
         self.govenator_degree = 60
+        self.stats_font = pygame.font.SysFont("monospace", 16)
+        self.winner_font = pygame.font.SysFont("monospace", 32)
+        self.winner_display = self.winner_font.render(self.color, True, self.font_color)
         for i in range(self.snek_length):
             self.add_tail()
 
@@ -67,11 +67,11 @@ class Player(GameSprite):
             elif event.key == K_s:
                 self.s_pressed = pressed
             return
-        # Disregard any input from other controllers
-        if self.controller_id != event.joy:
-            return
         # Parse left stick action
         if event.type == JOYAXISMOTION:
+            # Disregard any input from other controllers
+            if self.controller_id != event.joy:
+                return
             if event.axis == 0:
                 self.x_revert = self.x_add
                 self.x_add = event.value
@@ -139,6 +139,12 @@ class Player(GameSprite):
         self.stats = self.stats_font.render(self.color + ": " + str(len(self.tail)), True, self.font_color)
         return t
 
+    def pop_tail(self):
+        if self.tail:
+            return self.tail.pop()
+        else:
+            return None
+
     def pythagoras(self, x, y):
         return math.sqrt((x * x) + (y * y))
 
@@ -188,7 +194,6 @@ class Player(GameSprite):
             return left_stick_x, left_stick_y
 
     def find_movement_direction(self, origin_angle, dest_angle):
-        direction_of_movement = 1.0
         # I ain't fucking around with the same degrees
         if origin_angle == 360:
             origin_angle = 0
