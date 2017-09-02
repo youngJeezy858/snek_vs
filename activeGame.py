@@ -4,19 +4,18 @@ from random import randint
 import startMenu
 from gameScreen import *
 from player import *
+from playerExplosion import *
 import pygame
 
 
 class ActiveGame(GameScreen):
-
-    # Player color list
-    player_colors = ['blue', 'red', 'red', 'red']
 
     def __init__(self, screen, clock, players):
         super(ActiveGame, self).__init__(screen, clock)
         self.playerSprites = []
         self.pelletSprites = pygame.sprite.Group()
         self.tail_leftovers = pygame.sprite.Group()
+        self.explosion_sprites = pygame.sprite.Group()
         # Instantiate the pellet
         self.pellet = Pellet('images/pellet.png', (25, 25),
                              (randint(0, screen.get_width()), randint(0, screen.get_height())))
@@ -150,6 +149,11 @@ class ActiveGame(GameScreen):
                     self.kill_player(player)
                     continue
 
+        # Clean up the explosion sprites
+        for sprite in self.explosion_sprites:
+            if sprite.state == PlayerExplosion.CLEAN_UP:
+                self.explosion_sprites.remove(sprite)
+
         self.determine_winner()
 
         # Finish updating + drawing the sprites
@@ -161,6 +165,8 @@ class ActiveGame(GameScreen):
             self.pelletSprites.update()
         self.pelletSprites.draw(self.screen)
         self.tail_leftovers.draw(self.screen)
+        self.explosion_sprites.update()
+        self.explosion_sprites.draw(self.screen)
 
     def resize_screen(self, screen):
         super(ActiveGame, self).resize_screen(screen)
@@ -191,7 +197,17 @@ class ActiveGame(GameScreen):
 
     def kill_player(self, player):
         player.state = Player.DEAD
-        for i in self.playerSprites:
-            if i.sprites()[0].controller_id == player.controller_id:
-                self.playerSprites.remove(i)
+        for p in self.players:
+            if p.controller_id == player.controller_id:
+                while p.tail:
+                    temp_tail = player.pop_tail()
+                    if temp_tail is not None:
+                        temp_tail.controller_id = -9999
+                        self.tail_leftovers.add(temp_tail)
+                    else:
+                        break
+                self.players.remove(p)
+                del self.playerSprites[p.controller_id]
+                for i in range(0, 5):
+                    self.explosion_sprites.add(PlayerExplosion(p, self.screen.get_height()))
                 break

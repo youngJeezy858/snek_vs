@@ -14,6 +14,4 @@ class SnekTail(GameSprite):
     def update(self):
         if self.position_queue:
             self.position = self.position_queue.pop(0)
-        else:
-            print [self.controller_id]
         super(SnekTail, self).update()
