@@ -24,8 +24,8 @@ class PlayerExplosion(GameSprite):
         self.y_bound = y_bound
         self.state = self.PROCESSING
         self.movement_speed = player.movement_speed / 5
+        self.quadratic_a = random.uniform(0.100, 0.500)
         self.explosion_degree = self.gen_explosion_degree()
-        self.quadratic_a = random.uniform(0.1, 0.3)
         if self.explosion_degree > 0:
             self.movement_speed *= -1.0
 
@@ -38,7 +38,10 @@ class PlayerExplosion(GameSprite):
         super(PlayerExplosion, self).update()
 
     def gen_explosion_degree(self):
-        degree = random.uniform(self.movement_speed * 5, self.movement_speed * 10) * random.choice([-1.0, 1.0])
+        lower_bound = 5
+        upper_bound = 20
+        degree = random.uniform(self.movement_speed * lower_bound, self.movement_speed * upper_bound) * \
+                 random.choice([-1.0, 1.0])
         self.logger.debug("gen_explosion_degree", "explosion_degree = %s" % degree)
         return degree
 

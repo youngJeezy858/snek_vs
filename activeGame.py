@@ -6,19 +6,21 @@ from gameScreen import *
 from player import *
 from playerExplosion import *
 import pygame
+from logger import *
+from constants.debugging_flags import *
 
 
 class ActiveGame(GameScreen):
 
     def __init__(self, screen, clock, players):
         super(ActiveGame, self).__init__(screen, clock)
+        self.logger = Logger("Active Game", DEBUG_ACTIVE_GAME)
         self.playerSprites = []
         self.pelletSprites = pygame.sprite.Group()
         self.tail_leftovers = pygame.sprite.Group()
         self.explosion_sprites = pygame.sprite.Group()
         # Instantiate the pellet
-        self.pellet = Pellet('images/pellet.png', (25, 25),
-                             (randint(0, screen.get_width()), randint(0, screen.get_height())))
+        self.pellet = Pellet('images/pellet.png', (25, 25), self.screen.get_width(), self.screen.get_height())
         self.pelletSprites.add(self.pellet)
         # Playing by myself, I want the game to be over when there are 0 alive peeps.
         # Otherwise the game is over when there's only one player left.
@@ -77,20 +79,6 @@ class ActiveGame(GameScreen):
                         self.kill_player(player)
                         continue
 
-        # Draw and upoot the end game prompt
-        if self.prompt_for_exit:
-            exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
-            exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
-            self.screen.blit(exit_prompt, exit_prompt_rect)
-            if len(self.winner) == 0:
-                winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
-            else:
-                winner_display = self.winner_font.render\
-                    (self.winner[0].color + " WINS!", True, self.winner[0].font_color)
-            winner_display_rect = winner_display.get_rect\
-                (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
-            self.screen.blit(winner_display, winner_display_rect)
-
         # Updoot any actions occurring with the players
         for player in self.players:
             # Draw yo stats foo'
@@ -99,15 +87,18 @@ class ActiveGame(GameScreen):
             self.screen.blit(player.stats, (stats_x, stats_y))
 
             # Skip dis if you dead
-            # Skip dis if you invulnerable dawg
-            if player.state == Player.DEAD or player.invulnerable:
+            if player.state == Player.DEAD:
                 continue
 
             # Get some noms
             if pygame.sprite.collide_circle(player, self.pellet):
                 tail = player.add_tail()
                 self.playerSprites[player.controller_id].add(tail)
-                self.pellet.reset_position(self.screen.get_width(), self.screen.get_height())
+                self.reset_pellet_position()
+
+            # Skip dis if you invulnerable dawg
+            if player.invulnerable:
+                continue
 
             # Check if you dead sucka
             # Check if you hit a boundary
@@ -168,6 +159,20 @@ class ActiveGame(GameScreen):
         self.explosion_sprites.update()
         self.explosion_sprites.draw(self.screen)
 
+        # Draw and upoot the end game prompt
+        if self.prompt_for_exit:
+            exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
+            exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+            self.screen.blit(exit_prompt, exit_prompt_rect)
+            if len(self.winner) == 0:
+                winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
+            else:
+                winner_display = self.winner_font.render\
+                    (self.winner[0].color + " WINS!", True, self.winner[0].font_color)
+            winner_display_rect = winner_display.get_rect\
+                (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
+            self.screen.blit(winner_display, winner_display_rect)
+
     def resize_screen(self, screen):
         super(ActiveGame, self).resize_screen(screen)
         for sprite in self.sprites:
@@ -208,6 +213,23 @@ class ActiveGame(GameScreen):
                         break
                 self.players.remove(p)
                 del self.playerSprites[p.controller_id]
-                for i in range(0, 5):
+                for i in range(0, 10):
                     self.explosion_sprites.add(PlayerExplosion(p, self.screen.get_height()))
                 break
+
+    def reset_pellet_position(self, stopper=0):
+        if stopper == 30:
+            return
+        stopper += 1
+        self.pellet.reset_position(self.screen.get_width(), self.screen.get_height())
+        for player in self.players:
+            if pygame.sprite.collide_circle(self.pellet, player):
+                self.logger.debug("reset_pellet_position", "pellet: %s, player: %s" %
+                                  (self.pellet.position, player.position))
+                return self.reset_pellet_position(stopper)
+            for tail in player.tail[1:]:
+                if pygame.sprite.collide_circle(self.pellet, tail):
+                    return self.reset_pellet_position(stopper)
+        for leftover in self.tail_leftovers:
+            if pygame.sprite.collide_circle(self.pellet, leftover):
+                return self.reset_pellet_position(stopper)
