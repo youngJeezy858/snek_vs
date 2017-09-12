@@ -49,6 +49,9 @@ class ActiveGame(GameScreen):
         self.tail_pop_timer = 300
         self.announcement_font = pygame.font.SysFont("monospace", 24)
         self.winner_font = pygame.font.SysFont("monospace", 36)
+        self.endgame_surface = pygame.Surface((self.screen.get_width(), self.screen.get_height()))# , pygame.SRCALPHA, 32)
+        pygame.draw.rect(self.endgame_surface, (0, 0, 0), (0, 0, self.screen.get_width(), self.screen.get_height()))
+        self.endgame_surface.set_alpha(0)
         self.prompt_for_exit = False
 
     def next_screen(self):
@@ -66,7 +69,8 @@ class ActiveGame(GameScreen):
         super(ActiveGame, self).update()
         # Draw and updoot the start timer
         if not self.active_game and self.active_game_timer != 0:
-            timer = self.announcement_font.render(str(self.active_game_timer / 60), True, (255, 255, 255))
+            time = str(int(math.ceil(float(self.active_game_timer) / 60.0)))
+            timer = self.announcement_font.render(time, True, (255, 255, 255))
             self.screen.blit(timer, (self.screen.get_width() / 2, self.screen.get_height() / 2))
             self.active_game_timer -= 1
             if self.active_game_timer == 0:
@@ -167,17 +171,25 @@ class ActiveGame(GameScreen):
 
         # Draw and upoot the end game prompt
         if self.prompt_for_exit:
-            exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
-            exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
-            self.screen.blit(exit_prompt, exit_prompt_rect)
-            if len(self.winner) == 0:
-                winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
+            curr_alpha = self.endgame_surface.get_alpha()
+            if curr_alpha != 200:
+                self.endgame_surface.set_alpha(curr_alpha + 2)
+                endgame_surface_rect = self.endgame_surface.get_rect(center=(self.screen.get_width()/2, self.screen.get_height()/2))
+                self.screen.blit(self.endgame_surface, endgame_surface_rect)
             else:
-                winner_display = self.winner_font.render\
-                    (self.winner[0].color + " WINS!", True, self.winner[0].font_color)
-            winner_display_rect = winner_display.get_rect\
-                (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
-            self.screen.blit(winner_display, winner_display_rect)
+                endgame_surface_rect = self.endgame_surface.get_rect(center=(self.screen.get_width()/2, self.screen.get_height()/2))
+                self.screen.blit(self.endgame_surface, endgame_surface_rect)
+                exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
+                exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+                self.screen.blit(exit_prompt, exit_prompt_rect)
+                if len(self.winner) == 0:
+                    winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
+                else:
+                    winner_display = self.winner_font.render\
+                        (self.winner[0].color + " WINS!", True, self.winner[0].font_color)
+                winner_display_rect = winner_display.get_rect\
+                    (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
+                self.screen.blit(winner_display, winner_display_rect)
 
     def resize_screen(self, screen):
         super(ActiveGame, self).resize_screen(screen)

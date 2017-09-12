@@ -27,16 +27,12 @@ class ChooseCharacterScreen(GameScreen):
         self.readied_players = []
         self.selectors = []
         for i in range(0, 4):
-            if i < 4:
-                self.selectors.append(CharacterSelector(i, (200, 100 * (i + 1))))
-            else:
-                self.selectors.append(CharacterSelector(i, (600, 100 * (i + 1))))
+            self.selectors.append(CharacterSelector(i, (200, 100 * (i + 1))))
 
     def check_event(self, event):
         def find_selector(player_id):
             p_selector = None
             for temp_s in self.selectors:
-                temp_player = temp_s.get_player()
                 if temp_s.is_unallocated() and p_selector is None:
                     self.logger.debug("check_event", "%d, %d" % (player_id, temp_s.selector_id))
                     p_selector = temp_s
