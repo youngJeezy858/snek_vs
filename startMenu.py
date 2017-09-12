@@ -16,6 +16,11 @@ class StartMenu(GameScreen):
     def __init__(self, screen, clock):
         super(StartMenu, self).__init__(screen, clock)
         self.name = "start menu"
+        # Bump dat shit
+        pygame.mixer.init()
+        pygame.mixer.music.load('music/04-main-menu.wav')
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.1)
         # Instantiate start menu grid
         self.start_menu_button_grid = ButtonGrid(1, 3)
         # Instantiate start menu sprites
@@ -43,7 +48,6 @@ class StartMenu(GameScreen):
         self.grid_listener = self.start_menu_button_grid
         # Figure out if the screen needs to be resized
         if self.screen.get_width() != WINDOW_SIZE[0] or self.screen.get_height() != WINDOW_SIZE[1]:
-            print "shit"
             ScreenResizer.resize_screen(self, (self.screen.get_width(), self.screen.get_height()))
 
     def check_event(self, event):
@@ -72,6 +76,7 @@ class StartMenu(GameScreen):
             self.button_fullscreen.flip_screen_mode(self)
 
     def next_screen(self):
+        pygame.mixer.music.stop()
         return ChooseCharacterScreen(self.screen, self.clock)
 
     def resize_screen(self, screen):

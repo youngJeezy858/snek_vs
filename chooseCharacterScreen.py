@@ -8,6 +8,11 @@ class ChooseCharacterScreen(GameScreen):
     def __init__(self, screen, clock):
         super(ChooseCharacterScreen, self).__init__(screen, clock)
         self.name = "Choose character screen"
+        # Bump dat shit
+        pygame.mixer.init()
+        pygame.mixer.music.load('music/05-character-select.wav')
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.1)
         self.logger = Logger(self.name, DEBUG_CHOOSE_CHARACTER_SCREEN)
         self.button_grid = ButtonGrid(1, 2)
         self.button_sprites = pygame.sprite.Group()
@@ -69,6 +74,7 @@ class ChooseCharacterScreen(GameScreen):
             self.flag_start_game = True
 
     def next_screen(self):
+        pygame.mixer.music.stop()
         if self.flag_start_menu:
             return startMenu.StartMenu(self.screen, self.clock)
         elif self.flag_start_game:

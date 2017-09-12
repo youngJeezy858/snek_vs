@@ -15,6 +15,11 @@ class ActiveGame(GameScreen):
     def __init__(self, screen, clock, players):
         super(ActiveGame, self).__init__(screen, clock)
         self.logger = Logger("Active Game", DEBUG_ACTIVE_GAME)
+        # Bump dat shit
+        pygame.mixer.init()
+        pygame.mixer.music.load('music/11-dreamland.wav')
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.1)
         self.playerSprites = []
         self.pelletSprites = pygame.sprite.Group()
         self.tail_leftovers = pygame.sprite.Group()
@@ -47,6 +52,7 @@ class ActiveGame(GameScreen):
         self.prompt_for_exit = False
 
     def next_screen(self):
+        pygame.mixer.music.stop()
         return startMenu.StartMenu(self.screen, self.clock)
 
     def check_event(self, event):
