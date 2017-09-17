@@ -30,10 +30,12 @@ class StartMenu(GameScreen):
         self.start_menu_button_grid.add_button(button_quit, 0, 0)
         self.start_menu_button_grid.add_button(self.button_options, 0, 1)
         self.start_menu_button_grid.add_button(self.button_start_game, 0, 2)
+        title_logo = GameSprite("images/title_logo.png", (600, 350), (self.screen.get_width()/2, self.screen.get_height()/3))
         self.start_menu_sprites = pygame.sprite.Group()
         self.start_menu_sprites.add(self.button_start_game)
         self.start_menu_sprites.add(self.button_options)
         self.start_menu_sprites.add(button_quit)
+        self.start_menu_sprites.add(title_logo)
         # Instantiate the options menu sprites
         self.button_fullscreen = FullscreenGameButton()
         self.button_back = BackButton()
