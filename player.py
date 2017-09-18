@@ -13,7 +13,8 @@ class Player(GameSprite):
     def __init__(self, color, shade_id, dimensions, position, controller_id, movement_speed, x_add=0, y_add=-1):
         self.state = self.ALIVE
         self.color = color
-        image = "images/player_" + color + "_" + str(shade_id) + ".png"
+        self.shade_id = shade_id
+        image = "images/player_" + color + "_" + str(self.shade_id) + ".png"
         self.font_color = (255, 255, 255)
         if color == "blue":
             self.font_color = (0, 0, 255)

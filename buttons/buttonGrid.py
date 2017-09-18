@@ -4,6 +4,14 @@ from pygame.locals import *
 
 class ButtonGrid(object):
 
+    CONTROLLER_EVENTS = (
+        JOYAXISMOTION,
+        JOYBALLMOTION,
+        JOYHATMOTION,
+        JOYBUTTONUP,
+        JOYBUTTONDOWN
+    )
+
     def __init__(self, num_columns, num_rows, controller_position=(0, 0)):
         self.num_columns = num_columns
         self.num_rows = num_rows
@@ -17,6 +25,12 @@ class ButtonGrid(object):
         if end_column != -1:
             for i in range(start_column+1, end_column):
                 self.columns[i].add_pointer(start_column, start_row, end_row)
+
+    def check_event(self, event):
+        if self.is_controller_active(event):
+            self.check_controller_event(event)
+        else:
+            self.check_mouse_key_event(event)
 
     def check_controller_event(self, event):
         if event.type == JOYHATMOTION:
@@ -45,6 +59,12 @@ class ButtonGrid(object):
     def check_mouse_key_event(self, event):
         for column in self.columns:
             column.check_event(event)
+
+    def is_controller_active(self, event):
+        if event.type in self.CONTROLLER_EVENTS:
+            return True
+        else:
+            return False
 
     def find_controller_position(self, x, y):
         button = self.columns[x].buttons[y]

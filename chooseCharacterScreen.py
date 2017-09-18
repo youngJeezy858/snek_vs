@@ -42,7 +42,7 @@ class ChooseCharacterScreen(GameScreen):
 
         if event.type in self.CONTROLLER_EVENTS:
             s = find_selector(event.joy)
-            if s.selection_stage == 0 and event.type == JOYBUTTONDOWN and event.button == 2:
+            if s.selection_stage == 0 and event.type == JOYBUTTONDOWN and event.button == 1:
                 self.back_button.state = Button.ACTIVE
             elif s.get_player() is not None and event.type == JOYBUTTONDOWN and\
                     (event.button == 0 or event.button == 7):

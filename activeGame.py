@@ -2,12 +2,17 @@ from pygame.locals import *
 from pellet import *
 from random import randint
 import startMenu
+import pygame
+import copy
 from gameScreen import *
 from player import *
 from playerExplosion import *
-import pygame
 from logger import *
 from constants.debugging_flags import *
+from buttons.buttonGrid import *
+from buttons.playAgainButton import *
+from buttons.mainMenuButton import *
+from buttons.quitGameButton import *
 
 
 class ActiveGame(GameScreen):
@@ -35,12 +40,22 @@ class ActiveGame(GameScreen):
             self.game_over_num = 1
         # Instantiate the players
         self.players = players
+        self.og_players = []
         for player in players:
             temp_player_group = pygame.sprite.Group()
             temp_player_group.add(player)
             for t in player.tail:
                 temp_player_group.add(t)
             self.playerSprites.append(temp_player_group)
+            # Pygame doesn't allow deep copy's, what a piece of shit
+            self.og_players.append(Player(
+                player.color,
+                player.shade_id,
+                player.dimensions,
+                player.position,
+                player.controller_id,
+                player.movement_speed
+            ))
         # Everyone is a winner!
         self.winner = []
         self.determine_winner()
@@ -49,14 +64,28 @@ class ActiveGame(GameScreen):
         self.tail_pop_timer = 300
         self.announcement_font = pygame.font.SysFont("monospace", 24)
         self.winner_font = pygame.font.SysFont("monospace", 36)
-        self.endgame_surface = pygame.Surface((self.screen.get_width(), self.screen.get_height()))# , pygame.SRCALPHA, 32)
+        self.endgame_surface = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
         pygame.draw.rect(self.endgame_surface, (0, 0, 0), (0, 0, self.screen.get_width(), self.screen.get_height()))
         self.endgame_surface.set_alpha(0)
         self.prompt_for_exit = False
+        self.endgame_button_grid = ButtonGrid(1, 3)
+        self.endgame_button_sprites = pygame.sprite.Group()
+        self.button_play_again = PlayAgainButton()
+        self.button_main_menu = MainMenuButton()
+        button_quit = QuitGameButton()
+        self.endgame_button_grid.add_button(button_quit, 0, 0)
+        self.endgame_button_grid.add_button(self.button_main_menu, 0, 1)
+        self.endgame_button_grid.add_button(self.button_play_again, 0, 2)
+        self.endgame_button_sprites.add(button_quit)
+        self.endgame_button_sprites.add(self.button_main_menu)
+        self.endgame_button_sprites.add(self.button_play_again)
 
     def next_screen(self):
         pygame.mixer.music.stop()
-        return startMenu.StartMenu(self.screen, self.clock)
+        if self.button_main_menu.state == Button.ACTIVE:
+            return startMenu.StartMenu(self.screen, self.clock)
+        elif self.button_play_again.state == Button.ACTIVE:
+            return ActiveGame(self.screen, self.clock, self.og_players)
 
     def check_event(self, event):
         if event.type == KEYDOWN and event.key == K_ESCAPE or \
@@ -64,6 +93,8 @@ class ActiveGame(GameScreen):
             self.needs_switch = True
         for player in self.players:
             player.check_event(event)
+        if self.prompt_for_exit:
+            self.endgame_button_grid.check_event(event)
 
     def update(self):
         super(ActiveGame, self).update()
@@ -179,9 +210,6 @@ class ActiveGame(GameScreen):
             else:
                 endgame_surface_rect = self.endgame_surface.get_rect(center=(self.screen.get_width()/2, self.screen.get_height()/2))
                 self.screen.blit(self.endgame_surface, endgame_surface_rect)
-                exit_prompt = self.announcement_font.render("Press ESC or start button to exit", True, (255, 255, 255))
-                exit_prompt_rect = exit_prompt.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
-                self.screen.blit(exit_prompt, exit_prompt_rect)
                 if len(self.winner) == 0:
                     winner_display = self.winner_font.render("DRAW", True, (255, 255, 255))
                 else:
@@ -190,6 +218,10 @@ class ActiveGame(GameScreen):
                 winner_display_rect = winner_display.get_rect\
                     (center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
                 self.screen.blit(winner_display, winner_display_rect)
+                self.endgame_button_sprites.update()
+                self.endgame_button_sprites.draw(self.screen)
+                if self.button_main_menu.state == Button.ACTIVE or self.button_play_again.state == Button.ACTIVE:
+                    self.needs_switch = True
 
     def resize_screen(self, screen):
         super(ActiveGame, self).resize_screen(screen)

@@ -53,10 +53,7 @@ class StartMenu(GameScreen):
             ScreenResizer.resize_screen(self, (self.screen.get_width(), self.screen.get_height()))
 
     def check_event(self, event):
-        if self.is_controller_active(event):
-            self.grid_listener.check_controller_event(event)
-        else:
-            self.grid_listener.check_mouse_key_event(event)
+        self.grid_listener.check_event(event)
 
     def update(self):
         super(StartMenu, self).update()
