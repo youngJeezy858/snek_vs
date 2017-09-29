@@ -36,3 +36,4 @@ while True:
     #  The bits that update and draw everything else
     game_screen.update()
     pygame.display.update()
+    pygame.display.flip()

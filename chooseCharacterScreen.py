@@ -2,6 +2,7 @@ from startMenu import *
 from logger import *
 from characterSelector import *
 from constants.debugging_flags import *
+from computerPlayer import *
 
 
 class ChooseCharacterScreen(GameScreen):
@@ -75,8 +76,13 @@ class ChooseCharacterScreen(GameScreen):
             return startMenu.StartMenu(self.screen, self.clock)
         elif self.flag_start_game:
             players = []
+            player_id = 0
             for selector in self.selectors:
-                temp_player = selector.get_player()
+                temp_player = selector.get_player(player_id)
                 if temp_player is not None:
                     players.append(temp_player)
-            return ActiveGame(self.screen, self.clock, players)
+                    player_id += 1
+            #players.append(ComputerPlayer(player_id, 'red', 3, (25, 25), (200, 200), 3))
+            #players.append(ComputerPlayer(player_id + 1, 'red', 3, (25, 25), (300, 300), 3))
+            #players.append(ComputerPlayer(player_id + 2, 'red', 3, (25, 25), (400, 400), 3))
+            return ActiveGame(self.screen, self.clock, players, ActiveGame.WIN_CONDITION_FFA)

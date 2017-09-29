@@ -29,10 +29,10 @@ class GameSpriteSheet(GameSprite):
         x_offset = self.sprite_dimensions[0]
         y_offset = self.sprite_dimensions[1]
         rect = pygame.Rect(x, y, x_offset, y_offset)
-        self.image_master = pygame.Surface(rect.size).convert()
+        self.image_master = pygame.Surface(rect.size)
         self.image_master.blit(self.sprite_sheet_master, (0, 0), rect)
-        self.image_master = self.image_master.convert_alpha()
-        self.image_master = pygame.transform.scale(self.image_master, self.dimensions)
+        self.image_master = self.image_master
+        self.image_master = pygame.transform.smoothscale(self.image_master, self.dimensions)
         self.image = self.image_master
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()

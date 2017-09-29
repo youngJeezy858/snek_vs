@@ -108,9 +108,9 @@ class CharacterSelector(object):
         if self.selection_stage != 0:
             self.sprites.draw(screen)
 
-    def get_player(self):
+    def get_player(self, player_id=0):
         if self.selection_stage == len(self.SELCTION_STAGES) - 1:
-            return Player(self.color, self.shade_id, (25, 25), (100, 100 * (self.selector_id+1)), self.player_id, 3)
+            return Player(player_id, self.color, self.shade_id, (25, 25), (100, 100 * (self.selector_id+1)), self.player_id, 3)
         else:
             return None
 

@@ -6,12 +6,16 @@ from snekTail import *
 
 class Player(GameSprite):
 
+    # Player IDs
+    COMPUTER = -9999
+
     # Player states
     ALIVE = 0
     DEAD = 1
 
-    def __init__(self, color, shade_id, dimensions, position, controller_id, movement_speed, x_add=0, y_add=-1):
+    def __init__(self, player_id, color, shade_id, dimensions, position, controller_id, movement_speed, x_add=0, y_add=-1):
         self.state = self.ALIVE
+        self.player_id = player_id
         self.color = color
         self.shade_id = shade_id
         image = "images/player_" + color + "_" + str(self.shade_id) + ".png"
@@ -38,6 +42,7 @@ class Player(GameSprite):
         # Default invulnerability at start is 5s
         self.invulnerable = True
         self.invulnerable_time = 120
+        self.tail_sprites = pygame.sprite.Group()
         self.tail = []
         self.pause_timer = int(self.dimensions[0] / self.movement_speed)
         self.movement_governor = [position]
@@ -45,6 +50,7 @@ class Player(GameSprite):
         self.stats_font = pygame.font.SysFont("monospace", 16)
         self.winner_font = pygame.font.SysFont("monospace", 32)
         self.winner_display = self.winner_font.render(self.color, True, self.font_color)
+        self.stats = self.stats_font.render(self.color + ": " + str(len(self.tail_sprites)), True, self.font_color)
         for i in range(self.snek_length):
             self.add_tail()
 
@@ -119,7 +125,7 @@ class Player(GameSprite):
         self.real_x += x
         self.real_y += y
         self.position = (self.real_x, self.real_y)
-        for t in self.tail:
+        for t in self.tail_sprites:
             t.position_queue.append(self.position)
         if self.invulnerable_time > 0:
             self.invulnerable_time -= 1
@@ -136,12 +142,21 @@ class Player(GameSprite):
             p = end_tail.position
             q = end_tail.position_queue
         t = SnekTail(self.image_path, self.dimensions, p, self.controller_id, self.pause_timer, q)
+        self.tail_sprites.add(t)
         self.tail.append(t)
-        self.stats = self.stats_font.render(self.color + ": " + str(len(self.tail)), True, self.font_color)
+        self.stats = self.stats_font.render(self.color + ": " + str(len(self.tail_sprites)), True, self.font_color)
         return t
 
+    def draw_tail(self, screen):
+        self.tail_sprites.draw(screen)
+
+    def update_tail(self):
+        self.tail_sprites.update()
+
     def pop_tail(self):
-        if self.tail:
+        if self.tail_sprites:
+            end_tail = self.tail[-1]
+            self.tail_sprites.remove(end_tail)
             return self.tail.pop()
         else:
             return None

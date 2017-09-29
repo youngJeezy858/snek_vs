@@ -11,7 +11,7 @@ class GameSprite(pygame.sprite.Sprite):
         self.dimensions = dimensions
         self.position = position
         self.image_path = image
-        self.image = pygame.image.load(image)
+        self.image = pygame.image.load(image).convert_alpha()
         self.image = pygame.transform.scale(self.image, dimensions)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
@@ -19,7 +19,7 @@ class GameSprite(pygame.sprite.Sprite):
 
     def resize(self, dimensions, position):
         self.dimensions = dimensions
-        self.image = pygame.transform.scale(self.image_master, dimensions)
+        self.image = pygame.transform.smoothscale(self.image_master, dimensions)
         self.mask = pygame.mask.from_surface(self.image)
         self.image = self.image_master
         self.mask = pygame.mask.from_surface(self.image)
